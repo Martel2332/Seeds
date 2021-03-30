@@ -19,7 +19,6 @@ Seeds = function(niter=10^4, init=c(0,0,0,0,10), prop.sd=c(1,1,1,1,1)){   #ajust
     current = chain[iter,]
     
     logit_bottom = current[1]+current[2]*x1+current[3]*x2+current[4]*x1*x2+b
-    #if(is.na(logit_bottom)) print("NA")
     
     #Mise à jour de alpha_0
     prop = rnorm(1, current[1], prop.sd[1])
@@ -30,9 +29,6 @@ Seeds = function(niter=10^4, init=c(0,0,0,0,10), prop.sd=c(1,1,1,1,1)){   #ajust
     bottom = sum(r*logit_bottom - n*log(1+exp(logit_bottom)) + log(current[5]^(shape-1))
                  - (current[1]^2+current[2]^2+current[3]^2+current[4]^2+current[5]*rate))
     acc.prob1 = exp(top - bottom)
-    #print(acc.prob1)
-    #print(iter)
-    print(b)
     
     if (runif(1) < acc.prob1){
       current[1] = prop
@@ -101,6 +97,7 @@ Seeds = function(niter=10^4, init=c(0,0,0,0,10), prop.sd=c(1,1,1,1,1)){   #ajust
     
     #Mise à jour de b
     b = rnorm(21,0,1/sqrt(current[5]))
+    #Pb dans la mise à jour : valeurs trop élevées passent à l'infini cause des NA pour acc.prob
     
     chain[iter+1,] = current
   }
@@ -119,7 +116,7 @@ acc.rates = Seeds()$acc.rates
 chain = Seeds()$chain
 
 par(mfrow=c(1,5))
-para = c("alpha[0]","alpha[1]","alpha[2]","alpha[12]","tau")
+para = c("alpha[0]","alpha[1]","alpha[2]","alpha[12]","sigma")
 for (i in 1:5){
   plot(chain[,i], type="l", xlab="Iterations", ylab="", main=para[i])
 }
