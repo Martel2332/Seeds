@@ -1,4 +1,4 @@
-Seeds = function(niter=10^4, init=c(0,0,0,0,10), prop.sd=c(1,1,1,1,1)){   #ajuster prop.sd selon acc.rates
+Seeds = function(niter=10^4, init=c(0,0,0,0,10), prop.sd=c(0.4,0.5,0.5,0.7,1), prop.sd_b=rep(1,21)){   #ajuster prop.sd pour approcher 25% de acc.rates
   
   I = 21
   r = c(10, 23, 23, 26, 17, 5, 53, 55, 32, 46, 10, 8, 10, 8, 23, 0, 3, 22, 15, 32, 3)
@@ -10,24 +10,25 @@ Seeds = function(niter=10^4, init=c(0,0,0,0,10), prop.sd=c(1,1,1,1,1)){   #ajust
   rate = 10^-3
   b = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)  #à updater
   
-  chain=matrix(NA, niter+1, 5)
-  chain[1,] = init
+  chain=matrix(NA, niter+1, 26)
+  chain[1,1:5] = init
+  chain[1,6:26] = b
   
-  acc.rates = rep(0, 5)
+  acc.rates = rep(0, 25)
   
   for (iter in 1:niter){
     current = chain[iter,]
     
-    logit_bottom = current[1]+current[2]*x1+current[3]*x2+current[4]*x1*x2+b
+    logit_bottom = current[1]+current[2]*x1+current[3]*x2+current[4]*x1*x2+current[6:26]
     
     #Mise à jour de alpha_0
     prop = rnorm(1, current[1], prop.sd[1])
     
-    logit_top = prop+current[2]*x1+current[3]*x2+current[4]*x1*x2+b
-    top = sum(r*logit_top - n*log(1+exp(logit_top)) + log(current[5]^(shape-1))
-              - (prop^2+current[2]^2+current[3]^2+current[4]^2+current[5]*rate))  
-    bottom = sum(r*logit_bottom - n*log(1+exp(logit_bottom)) + log(current[5]^(shape-1))
-                 - (current[1]^2+current[2]^2+current[3]^2+current[4]^2+current[5]*rate))
+    logit_top = prop+current[2]*x1+current[3]*x2+current[4]*x1*x2+current[6:26]
+    top = sum(r*logit_top - n*log(1+exp(logit_top)) 
+              - (prop^2+current[2]^2+current[3]^2+current[4]^2)/(2*sd^2))  
+    bottom = sum(r*logit_bottom - n*log(1+exp(logit_bottom))
+                 - (current[1]^2+current[2]^2+current[3]^2+current[4]^2)/(2*sd^2))
     acc.prob1 = exp(top - bottom)
     
     if (runif(1) < acc.prob1){
@@ -38,11 +39,11 @@ Seeds = function(niter=10^4, init=c(0,0,0,0,10), prop.sd=c(1,1,1,1,1)){   #ajust
     #Mise à jour de alpha_1
     prop = rnorm(1, current[2], prop.sd[2])
     
-    logit_top = current[1]+prop*x1+current[3]*x2+current[4]*x1*x2+b
-    top = sum(r*logit_top - n*log(1+exp(logit_top)) + log(current[5]^(shape-1))
-              - (current[1]^2+prop^2+current[3]^2+current[4]^2+current[5]*rate))  
-    bottom = sum(r*logit_bottom - n*log(1+exp(logit_bottom)) + log(current[5]^(shape-1))
-                 - (current[1]^2+current[2]^2+current[3]^2+current[4]^2+current[5]*rate))
+    logit_top = current[1]+prop*x1+current[3]*x2+current[4]*x1*x2+current[6:26]
+    top = sum(r*logit_top - n*log(1+exp(logit_top))
+              - (current[1]^2+prop^2+current[3]^2+current[4]^2)/(2*sd^2))  
+    bottom = sum(r*logit_bottom - n*log(1+exp(logit_bottom))
+                 - (current[1]^2+current[2]^2+current[3]^2+current[4]^2)/(2*sd^2))
     acc.prob2 = exp(top - bottom)
     
     if (runif(1) < acc.prob2){
@@ -53,11 +54,11 @@ Seeds = function(niter=10^4, init=c(0,0,0,0,10), prop.sd=c(1,1,1,1,1)){   #ajust
     #Mise à jour de alpha_2
     prop = rnorm(1, current[3], prop.sd[3])
     
-    logit_top = current[1]+current[2]*x1+prop*x2+current[4]*x1*x2+b
-    top = sum(r*logit_top - n*log(1+exp(logit_top)) + log(current[5]^(shape-1))
-              - (current[1]^2+current[2]^2+prop^2+current[4]^2+current[5]*rate))  
-    bottom = sum(r*logit_bottom - n*log(1+exp(logit_bottom)) + log(current[5]^(shape-1))
-                 - (current[1]^2+current[2]^2+current[3]^2+current[4]^2+current[5]*rate))
+    logit_top = current[1]+current[2]*x1+prop*x2+current[4]*x1*x2+current[6:26]
+    top = sum(r*logit_top - n*log(1+exp(logit_top))
+              - (current[1]^2+current[2]^2+prop^2+current[4]^2)/(2*sd^2))  
+    bottom = sum(r*logit_bottom - n*log(1+exp(logit_bottom))
+                 - (current[1]^2+current[2]^2+current[3]^2+current[4]^2)/(2*sd^2))
     acc.prob3 = exp(top - bottom)
     
     if (runif(1) < acc.prob3){
@@ -68,11 +69,11 @@ Seeds = function(niter=10^4, init=c(0,0,0,0,10), prop.sd=c(1,1,1,1,1)){   #ajust
     #Mise à jour de alpha_12
     prop = rnorm(1, current[4], prop.sd[4])
     
-    logit_top = current[1]+current[2]*x1+current[3]*x2+prop*x1*x2+b
-    top = sum(r*logit_top - n*log(1+exp(logit_top)) + log(current[5]^(shape-1))
-              - (current[1]^2+current[2]^2+current[3]^2+prop^2+current[5]*rate))  
-    bottom = sum(r*logit_bottom - n*log(1+exp(logit_bottom)) + log(current[5]^(shape-1))
-                 - (current[1]^2+current[2]^2+current[3]^2+current[4]^2+current[5]*rate))
+    logit_top = current[1]+current[2]*x1+current[3]*x2+prop*x1*x2+current[6:26]
+    top = sum(r*logit_top - n*log(1+exp(logit_top))
+              - (current[1]^2+current[2]^2+current[3]^2+prop^2)/(2*sd^2))  
+    bottom = sum(r*logit_bottom - n*log(1+exp(logit_bottom))
+                 - (current[1]^2+current[2]^2+current[3]^2+current[4]^2)/(2*sd^2))
     acc.prob4 = exp(top - bottom)
     
     if (runif(1) < acc.prob4){
@@ -81,24 +82,25 @@ Seeds = function(niter=10^4, init=c(0,0,0,0,10), prop.sd=c(1,1,1,1,1)){   #ajust
     }
     
     #Mise à jour de tau
-    prop = rlnorm(1, log(current[5]), prop.sd[5])
+    current[5] = rgamma(1, shape=shape+I/2, rate=rate+sum(b^2)/2)
     
-    logit_top = current[1]+current[2]*x1+current[3]*x2+current[4]*x1*x2+b
-    top = sum(r*logit_top - n*log(1+exp(logit_top)) + log(current[5]^(shape-1))
-              - (current[1]^2+current[2]^2+current[3]^2+current[4]^2+prop*rate))  
-    bottom = sum(r*logit_bottom - n*log(1+exp(logit_bottom)) + log(current[5]^(shape-1))
-                 - (current[1]^2+current[2]^2+current[3]^2+current[4]^2+current[5]*rate))
-    acc.prob5 = exp(top - bottom)*(prop/current[5])
-    
-    if (runif(1) < acc.prob5){
-      current[5] = prop
-      acc.rates[5] = acc.rates[5] + 1
+    #Mise à jour des b_i
+    prop_b = NULL
+    for (i in 1:I){
+      prop_b[i] = rnorm(1, 0, prop.sd_b[i])
+      
+      logit_top = current[1]+current[2]*x1+current[3]*x2+current[4]*x1*x2+current[6:26]  #trouver comment inclure la propo à i
+      top = -(prop_b[i]^2)/(2*(1/current[5])) + r*logit_top - n*log(1+exp(logit_top))
+      bottom = -(current[i+5]^2)/(2*(1/current[5])) + r*logit_bottom - n*log(1+exp(logit_bottom))
+      acc.prob = exp(top-bottom)
+      
+      if (runif(1) < acc.prob){
+        current[i+5] = prop_b[i]
+        acc.rates[i+4] = acc.rates[i+4] + 1
+      }
     }
     
-    #Mise à jour de b
-    b = rnorm(21,0,1/sqrt(current[5]))
-    #Pb dans la mise à jour : valeurs trop élevées passent à l'infini cause des NA pour acc.prob
-    
+    #Mise à jour globale des chaînes
     chain[iter+1,] = current
   }
   
@@ -123,49 +125,8 @@ for (i in 1:5){
 
 colMeans(chain)
 
-#Init
-alpha0 <- 0
-alpha1 <- 0
-alpha2 <- 0
-alpha12 <- 0
-tau <- 10
-b <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-       0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-       0)
 
-
-
-data {
-  int<lower=0> I;
-  int<lower=0> n[I];
-  int<lower=0> N[I];
-  vector[I] x1; 
-  vector[I] x2; 
-}
-
-transformed data {
-  vector[I] x1x2;
-  x1x2 <- x1 .* x2;
-} 
-parameters {
-  real alpha0;
-  real alpha1;
-  real alpha12;
-  real alpha2;
-  real<lower=0> tau;
-  vector[I] b;
-}
-transformed parameters {
-  real<lower=0> sigma;
-  sigma  <- 1.0 / sqrt(tau);
-}
-model {
-  alpha0 ~ normal(0.0,1.0E3);
-  alpha1 ~ normal(0.0,1.0E3);
-  alpha2 ~ normal(0.0,1.0E3);
-  alpha12 ~ normal(0.0,1.0E3);
-  tau ~ gamma(1.0E-3,1.0E-3);
-  
-  b ~ normal(0.0, sigma);
-  n ~ binomial_logit(N, alpha0 + alpha1 * x1 + alpha2 * x2 + alpha12 * x1x2 + b);
+par(mfrow=c(3,7))
+for (i in 6:26){
+  plot(chain[,i], type="l", xlab="Iterations", ylab="")
 }
