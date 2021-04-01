@@ -1,4 +1,4 @@
-Seeds = function(niter=10^4, init=c(0,0,0,0,10), prop.sd=c(0.4,0.5,0.5,0.7,1), prop.sd_b=rep(1,21)){   #ajuster prop.sd pour approcher 25% de acc.rates
+Seeds = function(niter=10^4, init=c(0,0,0,0,10), prop.sd=c(0.4,0.5,0.5,0.7), prop.sd_b=rep(0.05,21)){   #ajuster prop.sd pour approcher 25% de acc.rates
   
   I = 21
   r = c(10, 23, 23, 26, 17, 5, 53, 55, 32, 46, 10, 8, 10, 8, 23, 0, 3, 22, 15, 32, 3)
@@ -86,10 +86,13 @@ Seeds = function(niter=10^4, init=c(0,0,0,0,10), prop.sd=c(0.4,0.5,0.5,0.7,1), p
     
     #Mise à jour des b_i
     prop_b = NULL
+    vec = current[6:26]
+    
     for (i in 1:I){
       prop_b[i] = rnorm(1, 0, prop.sd_b[i])
+      vec[i] = prop_b[i]
       
-      logit_top = current[1]+current[2]*x1+current[3]*x2+current[4]*x1*x2+current[6:26]  #trouver comment inclure la propo à i
+      logit_top = current[1]+current[2]*x1+current[3]*x2+current[4]*x1*x2+vec
       top = -(prop_b[i]^2)/(2*(1/current[5])) + r*logit_top - n*log(1+exp(logit_top))
       bottom = -(current[i+5]^2)/(2*(1/current[5])) + r*logit_bottom - n*log(1+exp(logit_bottom))
       acc.prob = exp(top-bottom)
@@ -125,6 +128,7 @@ for (i in 1:5){
 
 colMeans(chain)
 
+acc.rates
 
 par(mfrow=c(3,7))
 for (i in 6:26){
