@@ -1,4 +1,4 @@
-Seeds = function(niter=10^4, init=c(0,0,0,0,10), prop.sd=c(0.4,0.5,0.5,0.7), prop.sd_b=rep(0.05,21)){   #ajuster prop.sd pour approcher 25% de acc.rates
+Seeds = function(niter=10^4, init=c(-0.55,0.1,1.3,-0.8,10000), prop.sd=c(0.4,0.5,0.5,0.7), prop.sd_b=rep(0.05,21)){   #ajuster prop.sd pour approcher 25% de acc.rates
   
   I = 21
   r = c(10, 23, 23, 26, 17, 5, 53, 55, 32, 46, 10, 8, 10, 8, 23, 0, 3, 22, 15, 32, 3)
@@ -89,12 +89,12 @@ Seeds = function(niter=10^4, init=c(0,0,0,0,10), prop.sd=c(0.4,0.5,0.5,0.7), pro
     vec = current[6:26]
     
     for (i in 1:I){
-      prop_b[i] = rnorm(1, 0, prop.sd_b[i])
+      prop_b[i] = rnorm(1, current[i+5], prop.sd_b[i])
       vec[i] = prop_b[i]
       
       logit_top = current[1]+current[2]*x1+current[3]*x2+current[4]*x1*x2+vec
-      top = -(prop_b[i]^2)/(2*(1/current[5])) + r*logit_top - n*log(1+exp(logit_top))
-      bottom = -(current[i+5]^2)/(2*(1/current[5])) + r*logit_bottom - n*log(1+exp(logit_bottom))
+      top = -(prop_b[i]^2)/(2*(1/current[5])) + sum(r*logit_top - n*log(1+exp(logit_top)))
+      bottom = -(current[i+5]^2)/(2*(1/current[5])) + sum(r*logit_bottom - n*log(1+exp(logit_bottom)))
       acc.prob = exp(top-bottom)
       
       if (runif(1) < acc.prob){
@@ -133,4 +133,46 @@ acc.rates
 par(mfrow=c(3,7))
 for (i in 6:26){
   plot(chain[,i], type="l", xlab="Iterations", ylab="")
+}
+
+#Burning
+
+chain_burn = chain[-(1:1000),]
+
+par(mfrow=c(1,5))
+para_b = c("b[1]","b[2]","b[3]","b[4]","b[5]")
+for (i in 6:10){
+  plot(chain_burn[,i], type="l", xlab="Iterations", ylab="", main=para_b[i-5])
+}
+
+#ACF & Elagage
+
+par(mfrow=c(1,5))
+for (i in 1:5){
+  acf(chain[,i], lag.max=100, main=para[i])
+}
+
+chain_elag = chain[seq(1, nrow(chain), by = 20), 1:5]
+par(mfrow=c(2,5))
+for (i in 1:5){
+  plot(chain_elag[,i], type="l", xlab="Iterations", ylab="", main=para[i])
+}
+for (i in 1:5){
+  acf(chain_elag[,i], lag.max=100, main="")
+}
+
+colMeans(chain_elag)
+
+par(mfrow=c(1,5))
+for (i in 6:10){
+  acf(chain[,i], lag.max=100, main=para_b[i])
+}
+
+chain_elag_b = chain_burn[seq(1, nrow(chain_burn), by = 10), 6:10]
+par(mfrow=c(2,5))
+for (i in 6:10){
+  plot(chain_elag_b[,i-5], type="l", xlab="Iterations", ylab="", main=para_b[i-5])
+}
+for (i in 6:10){
+  acf(chain_elag_b[,i-5], lag.max=100, main="")
 }
